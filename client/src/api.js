@@ -1,5 +1,10 @@
-export const DJANGO_BASE = "http://127.0.0.1:8000/api";
-export const NODE_WS = "http://127.0.0.1:5000";
+export const DJANGO_BASE = process.env.NODE_ENV === 'production' 
+  ? "https://your-django-app.onrender.com/api"
+  : "http://127.0.0.1:8000/api";
+
+export const NODE_WS = process.env.NODE_ENV === 'production'
+  ? "https://your-node-app.onrender.com"
+  : "http://127.0.0.1:5000";
 
 async function request(path, { method = "GET", body, token } = {}) {
   const headers = { "Content-Type": "application/json" };
