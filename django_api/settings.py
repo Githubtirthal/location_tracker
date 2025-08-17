@@ -13,9 +13,10 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
-# Render.com URL
-if 'RENDER' in os.environ:
-    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
+# Railway.app URL
+if 'RAILWAY_ENVIRONMENT' in os.environ:
+    ALLOWED_HOSTS.append(os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''))
+    ALLOWED_HOSTS.append('.railway.app')
 
 # -------------------------
 # INSTALLED APPS
@@ -112,7 +113,10 @@ if DEBUG:
 else:
     CORS_ALLOWED_ORIGINS = [
         os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+        'https://your-app.vercel.app',  # Update with your Vercel URL
     ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # -------------------------
 # STATIC & MEDIA

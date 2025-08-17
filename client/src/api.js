@@ -1,24 +1,41 @@
 export const DJANGO_BASE = process.env.NODE_ENV === 'production' 
-  ? "https://your-django-app.onrender.com/api"
+  ? process.env.REACT_APP_DJANGO_URL || "https://your-django-app.railway.app/api"
   : "http://127.0.0.1:8000/api";
 
 export const NODE_WS = process.env.NODE_ENV === 'production'
-  ? "https://your-node-app.onrender.com"
+  ? process.env.REACT_APP_NODE_URL || "https://your-node-app.railway.app"
   : "http://127.0.0.1:5000";
 
 async function request(path, { method = "GET", body, token } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${DJANGO_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      // Sanitize token to prevent HTTP response splitting
+      const sanitizedToken = token.replace(/[\r\n]/g, '');
+      headers["Authorization"] = `Bearer ${sanitizedToken}`;
+    }
+    
+    const res = await fetch(`${DJANGO_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+    
+    return await res.json();
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Network error: Please check your connection');
+    }
+    if (error instanceof SyntaxError) {
+      throw new Error('Invalid response format from server');
+    }
+    throw error;
   }
-  return res.json();
 }
 
 export const api = {

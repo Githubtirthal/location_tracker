@@ -176,7 +176,7 @@ app.get("/", (req, res) => {
 // ----------------------
 // START SERVER
 // ----------------------
-const PORT = 5000;
-server.listen(PORT, () => {
-  console.log(`Node server running on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Node server running on port ${PORT}`);
 });

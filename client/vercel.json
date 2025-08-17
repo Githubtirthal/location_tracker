@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_DJANGO_URL": "@django-url",
+    "REACT_APP_NODE_URL": "@node-url"
+  }
+}

@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./AuthContext";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import RoomMap from "./components/RoomMap";
+import Landing from "./components/Landing";
 
 function ProtectedRoute({ children }) {
   const { isAuthed } = useAuth();
@@ -16,7 +17,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route
             path="/dashboard"
