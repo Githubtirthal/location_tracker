@@ -20,8 +20,10 @@ app.use(express.json());
 // ----------------------
 // CONFIG
 // ----------------------
-const DJANGO_API_BASE = "http://127.0.0.1:8000/api";
-const JWT_SECRET = null; 
+const DJANGO_API_BASE = process.env.DJANGO_API_BASE || "https://location-tracker-4zk7.onrender.com/api";
+const JWT_SECRET = null;
+
+console.log('Django API Base:', DJANGO_API_BASE); 
 // null here because Django signs with its own secret — we'll just verify signature via decoding
 // In prod, better to call Django to validate token instead of local verify
 
