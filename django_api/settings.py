@@ -108,15 +108,19 @@ SIMPLE_JWT = {
 # CORS
 # -------------------------
 # CORS settings for production
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOWED_ORIGINS = [
-        os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
-        'https://your-app.vercel.app',  # Update with your Vercel URL
-    ]
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # -------------------------
 # STATIC & MEDIA
