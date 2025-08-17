@@ -1,14 +1,8 @@
-export const DJANGO_BASE = process.env.NODE_ENV === 'production' 
-  ? process.env.REACT_APP_DJANGO_URL || "https://location-tracker-4zk7.onrender.com/api"
-  : "http://127.0.0.1:8000/api";
+export const DJANGO_BASE = "https://location-tracker-4zk7.onrender.com/api";
+export const NODE_WS = "https://node-server-yp9l.onrender.com";
 
-console.log('Environment:', process.env.NODE_ENV);
-console.log('Django URL:', process.env.REACT_APP_DJANGO_URL);
-console.log('Final DJANGO_BASE:', DJANGO_BASE);
-
-export const NODE_WS = process.env.NODE_ENV === 'production'
-  ? process.env.REACT_APP_NODE_URL || "https://node-server-yp9l.onrender.com"
-  : "http://127.0.0.1:5000";
+console.log('DJANGO_BASE:', DJANGO_BASE);
+console.log('NODE_WS:', NODE_WS);
 
 async function request(path, { method = "GET", body, token } = {}) {
   try {
