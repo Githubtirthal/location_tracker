@@ -16,6 +16,7 @@
     "framer-motion": "^10.16.0",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
+    "socket.io-client": "^4.7.2",
     "@radix-ui/react-tooltip": "^1.0.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
