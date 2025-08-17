@@ -1,9 +1,15 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from api import views
 from rest_framework_simplejwt.views import TokenRefreshView
 
+def api_root(request):
+    return JsonResponse({"message": "Location Tracker API is running"})
+
 urlpatterns = [
+    path("", api_root, name="root"),
+    path("api/", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("api/signup", views.signup, name="signup"),
     path("api/login", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
