@@ -24,7 +24,7 @@ export default function RoomMap() {
   const [liveCount, setLiveCount] = useState(0);
   const [isSharing, setIsSharing] = useState(false);
   const [users, setUsers] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState({ totalDistance: 0, avgSpeed: 25, lastUpdate: new Date() });
   const [pathModal, setPathModal] = useState({ show: false, targetLat: null, targetLng: null });
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -374,6 +374,16 @@ export default function RoomMap() {
   return (
     <div className="relative w-full h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
+      {/* Mobile Menu Toggle */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed top-4 left-4 z-[1002] bg-white shadow-lg rounded-lg p-3 border border-slate-200"
+      >
+        <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -381,7 +391,7 @@ export default function RoomMap() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="absolute left-0 top-0 h-full w-80 md:w-80 w-full bg-white shadow-2xl z-50 border-r border-slate-200"
+            className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-[1001] border-r border-slate-200"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-sky-600 to-indigo-600 p-6 text-white">
@@ -510,52 +520,26 @@ export default function RoomMap() {
       </AnimatePresence>
 
       {/* Map Container */}
-      <div className={`transition-all duration-300 h-full ${
-        sidebarOpen ? 'md:ml-80 ml-0' : 'ml-0'
-      }`}>
+      <div className="w-full h-full">
         <div id="map" className="w-full h-full" />
       </div>
 
-      {/* Toggle Sidebar Button */}
-      {!sidebarOpen && (
-        <motion.button
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          onClick={() => setSidebarOpen(true)}
-          className="absolute top-20 left-4 z-[1000] bg-white shadow-lg rounded-xl p-3 hover:shadow-xl transition-all duration-300 border border-slate-200 group"
-        >
-          <svg className="w-6 h-6 text-slate-600 group-hover:text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </motion.button>
-      )}
 
-      {/* Mobile Close Button */}
-      {sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden fixed top-4 right-4 z-[60] bg-black/50 text-white rounded-full p-2"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
 
       {/* Search Box */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] bg-white rounded-xl p-4 shadow-2xl border border-slate-200 w-80 max-w-[90vw]">
+      <div className="absolute top-4 right-4 left-20 z-[1000] bg-white rounded-lg p-2 shadow-lg border border-slate-200">
         <div className="flex gap-2">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchAndNavigate()}
-            placeholder="Search places to navigate... (e.g. narod for naroda)"
-            className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search places..."
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <button
             onClick={searchAndNavigate}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
           >
             Go
           </button>
@@ -563,14 +547,14 @@ export default function RoomMap() {
       </div>
 
       {/* Quick Stats Overlay */}
-      <div className="absolute top-20 right-4 z-40 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20">
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
+      <div className="absolute top-16 right-4 z-40 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-white/20">
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-slate-600">Live</span>
           </div>
           <div className="text-slate-600">
-            {liveCount}/{userCount} users online
+            {liveCount}/{userCount} online
           </div>
         </div>
       </div>
