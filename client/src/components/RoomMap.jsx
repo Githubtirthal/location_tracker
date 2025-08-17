@@ -381,7 +381,7 @@ export default function RoomMap() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 border-r border-slate-200"
+            className="absolute left-0 top-0 h-full w-80 md:w-80 w-full bg-white shadow-2xl z-50 border-r border-slate-200"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-sky-600 to-indigo-600 p-6 text-white">
@@ -511,7 +511,7 @@ export default function RoomMap() {
 
       {/* Map Container */}
       <div className={`transition-all duration-300 h-full ${
-        sidebarOpen ? 'ml-80' : 'ml-0'
+        sidebarOpen ? 'md:ml-80 ml-0' : 'ml-0'
       }`}>
         <div id="map" className="w-full h-full" />
       </div>
@@ -530,8 +530,20 @@ export default function RoomMap() {
         </motion.button>
       )}
 
+      {/* Mobile Close Button */}
+      {sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden fixed top-4 right-4 z-[60] bg-black/50 text-white rounded-full p-2"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+
       {/* Search Box */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] bg-white rounded-xl p-4 shadow-2xl border border-slate-200 min-w-80">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] bg-white rounded-xl p-4 shadow-2xl border border-slate-200 w-80 max-w-[90vw]">
         <div className="flex gap-2">
           <input
             type="text"
