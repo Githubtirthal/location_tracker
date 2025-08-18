@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-in-prod")
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "location-tracker-4zk7.onrender.com,127.0.0.1,localhost").split(",")
 
 # Railway.app URL
 if 'RAILWAY_ENVIRONMENT' in os.environ:
@@ -108,9 +108,14 @@ SIMPLE_JWT = {
 # CORS
 # -------------------------
 # CORS settings for production
-CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "True") == "True"
+CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [o for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o]
+CORS_ALLOWED_ORIGINS = [
+    o for o in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://location-tracker-135y.vercel.app,https://location-tracker-135y-git-main-tirthal-patels-projects.vercel.app,https://location-tracker-135y-m3epzraf5-tirthal-patels-projects.vercel.app",
+    ).split(",") if o
+]
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
@@ -133,7 +138,12 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # CSRF trusted origins for production (comma-separated)
-CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://location-tracker-135y.vercel.app,https://location-tracker-135y-git-main-tirthal-patels-projects.vercel.app,https://location-tracker-135y-m3epzraf5-tirthal-patels-projects.vercel.app",
+    ).split(",") if o
+]
 
 # -------------------------
 # INTERNATIONALIZATION

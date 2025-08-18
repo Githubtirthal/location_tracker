@@ -7,7 +7,8 @@ const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || "*").split(",");
+const defaultAllowed = process.env.NODE_ENV === 'production' ? '*' : '*';
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || defaultAllowed).split(",");
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins.length === 1 && allowedOrigins[0] === "*" ? true : allowedOrigins,
@@ -22,7 +23,7 @@ app.use(express.json());
 // ----------------------
 // CONFIG
 // ----------------------
-const DJANGO_API_BASE = process.env.DJANGO_API_BASE || "http://127.0.0.1:8000/api";
+const DJANGO_API_BASE = process.env.DJANGO_API_BASE || (process.env.NODE_ENV === 'production' ? "https://location-tracker-4zk7.onrender.com/api" : "http://127.0.0.1:8000/api");
 const JWT_SECRET = null;
 
 console.log('Django API Base:', DJANGO_API_BASE); 

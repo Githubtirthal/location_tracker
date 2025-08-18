@@ -1,8 +1,17 @@
 // Read from Vite env at build time; fallback to localhost for dev
 const ENV_DJANGO = import.meta?.env?.VITE_DJANGO_BASE;
 const ENV_WS = import.meta?.env?.VITE_NODE_WS;
-export const DJANGO_BASE = ENV_DJANGO || (typeof window !== 'undefined' && window.__DJANGO_BASE__) || "http://127.0.0.1:8000/api";
-export const NODE_WS = ENV_WS || (typeof window !== 'undefined' && window.__NODE_WS__) || "http://127.0.0.1:5000";
+const IS_PROD = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD;
+const DEFAULT_PROD_DJANGO = "https://location-tracker-4zk7.onrender.com/api";
+const DEFAULT_PROD_WS = "https://node-server-yp9l.onrender.com";
+
+export const DJANGO_BASE =
+  ENV_DJANGO ||
+  (IS_PROD ? DEFAULT_PROD_DJANGO : (typeof window !== 'undefined' && window.__DJANGO_BASE__) || "http://127.0.0.1:8000/api");
+
+export const NODE_WS =
+  ENV_WS ||
+  (IS_PROD ? DEFAULT_PROD_WS : (typeof window !== 'undefined' && window.__NODE_WS__) || "http://127.0.0.1:5000");
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('DJANGO_BASE:', DJANGO_BASE);
