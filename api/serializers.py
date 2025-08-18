@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Room, Membership
+from .models import Room, Membership, Movement, GeoFence, MeetingPoint
 
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
@@ -33,3 +33,30 @@ class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = ("id", "user", "room", "joined_at")
+
+
+class MovementSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    room = RoomSerializer(read_only=True)
+
+    class Meta:
+        model = Movement
+        fields = ("id", "user", "room", "latitude", "longitude", "created_at")
+
+
+class GeoFenceSerializer(serializers.ModelSerializer):
+    room = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = GeoFence
+        fields = ("room", "center_lat", "center_lng", "radius_m", "created_by", "created_at")
+
+
+class MeetingPointSerializer(serializers.ModelSerializer):
+    room = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = MeetingPoint
+        fields = ("id", "room", "place_name", "lat", "lng", "reach_by", "created_by", "active", "created_at")

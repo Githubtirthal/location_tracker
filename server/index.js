@@ -20,7 +20,7 @@ app.use(express.json());
 // ----------------------
 // CONFIG
 // ----------------------
-const DJANGO_API_BASE = process.env.DJANGO_API_BASE || "https://location-tracker-4zk7.onrender.com/api";
+const DJANGO_API_BASE = "http://127.0.0.1:8000/api";
 const JWT_SECRET = null;
 
 console.log('Django API Base:', DJANGO_API_BASE); 
@@ -31,6 +31,7 @@ console.log('Django API Base:', DJANGO_API_BASE);
 // IN-MEMORY STORAGE
 // ----------------------
 let roomUsers = {}; // { roomId: { socketId: { username, lat, lng, isLive } } }
+let roomState = {}; // { roomId: { geofence: { center_lat, center_lng, radius_m }, meeting: {...}, userInside: { username: boolean } } }
 
 // ----------------------
 // HELPER: Verify JWT via Django
@@ -69,6 +70,17 @@ io.on("connection", (socket) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.data.ok) throw new Error("Room validation failed");
+      // prime room state (geofence/meeting)
+      if (!roomState[roomId]) roomState[roomId] = { geofence: null, meeting: null, userInside: {} };
+      roomState[roomId].geofence = res.data.geofence || null;
+      roomState[roomId].meeting = res.data.meeting || null;
+      // Send current state to the user who joined
+      if (roomState[roomId].geofence) {
+        socket.emit("geofence-updated", roomState[roomId].geofence);
+      }
+      if (roomState[roomId].meeting) {
+        socket.emit("meeting-announced", roomState[roomId].meeting);
+      }
     } catch (err) {
       socket.emit("error", { message: "Room not found" });
       socket.disconnect();
@@ -79,6 +91,11 @@ io.on("connection", (socket) => {
     const namespace = `/room-${roomId}`;
     console.log(`Socket ${socket.id} joining namespace: ${namespace}`);
     socket.join(namespace);
+    // stash identity for later handlers
+    socket.data = socket.data || {};
+    socket.data.userId = userData.user_id;
+    socket.data.username = userData.username;
+    socket.data.roomId = roomId;
 
     if (!roomUsers[roomId]) roomUsers[roomId] = {};
     roomUsers[roomId][socket.id] = {
@@ -87,6 +104,9 @@ io.on("connection", (socket) => {
       lng: null,
       isLive: false
     };
+    if (!roomState[roomId]) roomState[roomId] = { geofence: null, meeting: null, userInside: {} };
+    // initialize inside flag as true (unknown) so first evaluation outside triggers alert
+    if (userData?.username) roomState[roomId].userInside[userData.username] = true;
 
     // Notify others
     console.log(`Notifying ${namespace} that ${userData.username} joined`);
@@ -107,7 +127,7 @@ io.on("connection", (socket) => {
     console.log(`User ${userData.username} joined room ${roomId}`);
   });
 
-  socket.on("location-update", ({ roomId, lat, lng }) => {
+  socket.on("location-update", async ({ roomId, lat, lng }) => {
     if (roomUsers[roomId] && roomUsers[roomId][socket.id]) {
       const user = roomUsers[roomId][socket.id];
       user.lat = lat;
@@ -128,6 +148,38 @@ io.on("connection", (socket) => {
         lat,
         lng
       });
+
+      // Record movement asynchronously (no await blocking)
+      try {
+        const userId = socket.data?.userId;
+        if (userId) {
+          axios.post(`${DJANGO_API_BASE}/movement/record`, {
+            user_id: userId,
+            room_id: roomId,
+            latitude: lat,
+            longitude: lng,
+          }).catch(() => {});
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Geofence check and alert on leaving
+      const state = roomState[roomId];
+      if (state && state.geofence) {
+        const { center_lat, center_lng, radius_m } = state.geofence;
+        const distanceM = haversineMeters(lat, lng, center_lat, center_lng);
+        const isInside = distanceM <= Number(radius_m);
+        const prevInside = state.userInside[user.username];
+        state.userInside[user.username] = isInside;
+        if (prevInside && !isInside) {
+          io.to(`/room-${roomId}`).emit("geofence-alert", {
+            username: user.username,
+            distance_m: Math.round(distanceM),
+            outside_by_m: Math.max(0, Math.round(distanceM - Number(radius_m)))
+          });
+        }
+      }
     }
   });
 
@@ -151,6 +203,22 @@ io.on("connection", (socket) => {
       io.to(`/room-${roomId}`).emit("live-count", users.filter(u => u.isLive).length);
       console.log(`User ${username} left room ${roomId}`);
     }
+  });
+
+  // Admin broadcast: update geofence (already saved via Django)
+  socket.on("update-geofence", ({ roomId, geofence }) => {
+    if (!roomId || !geofence) return;
+    if (!roomState[roomId]) roomState[roomId] = { geofence: null, meeting: null, userInside: {} };
+    roomState[roomId].geofence = geofence;
+    io.to(`/room-${roomId}`).emit("geofence-updated", geofence);
+  });
+
+  // Admin broadcast: announce meeting
+  socket.on("announce-meeting", ({ roomId, meeting }) => {
+    if (!roomId || !meeting) return;
+    if (!roomState[roomId]) roomState[roomId] = { geofence: null, meeting: null, userInside: {} };
+    roomState[roomId].meeting = meeting;
+    io.to(`/room-${roomId}`).emit("meeting-announced", meeting);
   });
 
   socket.on("disconnect", () => {
@@ -182,3 +250,16 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Node server running on port ${PORT}`);
 });
+
+// ----------------------
+// Utils
+// ----------------------
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // meters
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}

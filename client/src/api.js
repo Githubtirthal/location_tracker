@@ -1,10 +1,5 @@
-export const DJANGO_BASE = process.env.NODE_ENV === 'production' 
-  ? "https://location-tracker-4zk7.onrender.com/api"
-  : "http://127.0.0.1:8000/api";
-
-export const NODE_WS = process.env.NODE_ENV === 'production'
-  ? "https://node-server-yp9l.onrender.com"
-  : "http://127.0.0.1:5000";
+export const DJANGO_BASE = "http://127.0.0.1:8000/api";
+export const NODE_WS = "http://127.0.0.1:5000";
 
 console.log('Environment:', process.env.NODE_ENV);
 console.log('DJANGO_BASE:', DJANGO_BASE);
@@ -49,4 +44,14 @@ export const api = {
   joinRoom: (token, room_id) => request("/rooms/join", { method: "POST", body: { room_id }, token }),
   listRooms: (token) => request("/rooms/list", { method: "POST", token }),
   bootstrap: (token, room_id) => request("/rooms/bootstrap", { method: "POST", body: { room_id }, token }),
+  // Geofence
+  setGeofence: (token, { room_id, center_lat, center_lng, radius_m }) =>
+    request("/geofence/set", { method: "POST", token, body: { room_id, center_lat, center_lng, radius_m } }),
+  getGeofence: (token, room_id) =>
+    request("/geofence/get", { method: "POST", token, body: { room_id } }),
+  // Meeting
+  setMeeting: (token, { room_id, place_name, lat, lng, reach_by }) =>
+    request("/meeting/set", { method: "POST", token, body: { room_id, place_name, lat, lng, reach_by } }),
+  getMeeting: (token, room_id) =>
+    request("/meeting/get", { method: "POST", token, body: { room_id } }),
 };

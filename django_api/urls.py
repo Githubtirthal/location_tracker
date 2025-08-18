@@ -18,4 +18,12 @@ urlpatterns = [
     path("api/rooms/join", views.join_room, name="join_room"),
     path("api/rooms/list", views.list_rooms, name="list_rooms"),
     path("api/rooms/bootstrap", views.bootstrap_room, name="bootstrap_room"),
+    # geofence
+    path("api/geofence/set", views.set_geofence, name="set_geofence"),
+    path("api/geofence/get", views.get_geofence, name="get_geofence"),
+    # meeting point
+    path("api/meeting/set", views.set_meeting_point, name="set_meeting_point"),
+    path("api/meeting/get", views.get_meeting_point, name="get_meeting_point"),
+    # movements
+    path("api/movement/record", views.record_movement, name="record_movement"),
 ]
