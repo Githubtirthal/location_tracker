@@ -1,3 +1,11 @@
+# Frontend env
+
+Build-time env vars (Vite):
+
+- VITE_DJANGO_BASE=https://your-backend-domain/api
+- VITE_NODE_WS=https://your-node-ws-domain
+
+For local dev they default to localhost.
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
