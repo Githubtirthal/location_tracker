@@ -1,26 +1,31 @@
 {
-  "name": "server",
+  "name": "location-tracker-socket-server",
   "version": "1.0.0",
+  "description": "Socket.IO server for real-time location tracking",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "axios": "^1.11.0",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "axios": "^1.6.2",
     "jsonwebtoken": "^9.0.2",
-    "socket.io": "^4.8.1"
+    "cors": "^2.8.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.0.2"
   },
-  "scripts": {
-    "start": "nodemon index.js"
-  }
-
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "socket.io",
+    "real-time",
+    "location-tracking",
+    "websocket"
+  ],
+  "author": "Tirthal",
+  "license": "MIT"
 }

@@ -47,17 +47,11 @@ export default function Dashboard() {
     setError("");
     if (!joinId.trim()) return;
     
-    const roomId = Number(joinId);
-    if (isNaN(roomId) || roomId <= 0) {
-      setError("Please enter a valid room ID");
-      return;
-    }
-    
     try {
-      await api.joinRoom(token, roomId);
+      await api.joinRoom(token, joinId.trim());
       setJoinId("");
       await loadRooms();
-      navigate(`/room/${roomId}`);
+      navigate(`/room/${joinId.trim()}`);
     } catch (e) {
       setError(e.message);
     }
@@ -74,27 +68,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
+      {/* Page Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="flex items-center gap-2 group">
-                <span className="inline-block h-8 w-8 rounded bg-gradient-to-br from-sky-500 to-indigo-600 transition-transform group-hover:scale-110" />
-                <span className="text-lg font-semibold tracking-tight text-slate-900">Realtime Tracker</span>
-              </Link>
-              <span className="text-slate-400">/</span>
-              <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-600">Welcome, {user?.username}</span>
-              <button
-                onClick={logout}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-lg transition-all duration-200 hover:scale-105"
-              >
-                Logout
-              </button>
-            </div>
+          <div className="py-4">
+            <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-600">Welcome back, {user?.username}</p>
           </div>
         </div>
       </div>
@@ -172,10 +151,11 @@ export default function Dashboard() {
               placeholder="Enter room name..."
               value={newRoom}
               onChange={(e) => setNewRoom(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
             />
             <button
               onClick={handleCreate}
-              className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105 font-semibold"
+              className="w-full py-3   bg-red-500 text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105 font-semibold"
             >
               Create Room
             </button>
@@ -197,6 +177,7 @@ export default function Dashboard() {
               placeholder="Enter room ID..."
               value={joinId}
               onChange={(e) => setJoinId(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
             />
             <button
               onClick={handleJoin}

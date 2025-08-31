@@ -93,7 +93,7 @@ export default function RoomMap() {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      socket.emit("join-room", { token, roomId: Number(roomId) });
+      socket.emit("join-room", { token, roomId: roomId });
     });
 
     socket.on("error", (e) => {
@@ -151,7 +151,10 @@ export default function RoomMap() {
       setMeeting(m || null);
       renderMeeting(m || null);
       if (m) {
-        const text = `Meeting at ${m.place_name} • reach by ${new Date(m.reach_by).toLocaleString()}`;
+        const text = `Meeting set at ${m.place_name} by ${m.created_by || 'Admin'} • reach by ${new Date(m.reach_by).toLocaleString()}`;
+        setAlerts((prev) => [{ id: Date.now() + Math.random(), text }, ...prev].slice(0, 20));
+      } else {
+        const text = `Meeting point has been deleted`;
         setAlerts((prev) => [{ id: Date.now() + Math.random(), text }, ...prev].slice(0, 20));
       }
     });
@@ -178,7 +181,7 @@ export default function RoomMap() {
     async function bootstrap() {
       if (!token) return;
       try {
-        const data = await api.bootstrap(token, Number(roomId));
+        const data = await api.bootstrap(token, roomId);
         const creatorUsername = data?.room?.creator?.username;
         setIsAdmin(!!user?.username && creatorUsername === user.username);
         if (data?.geofence) {
@@ -209,7 +212,7 @@ export default function RoomMap() {
         setCurrentLocation({ lat: latitude, lng: longitude });
         upsertMarker("_me", latitude, longitude, true);
         console.log("Sending location update:", latitude, longitude);
-        socketRef.current?.emit("location-update", { roomId: Number(roomId), lat: latitude, lng: longitude });
+        socketRef.current?.emit("location-update", { roomId: roomId, lat: latitude, lng: longitude });
       },
       (err) => {
         console.warn("Geolocation error", err);
@@ -258,7 +261,7 @@ export default function RoomMap() {
       const center = gfCenter || (map ? map.getCenter() : null);
       if (!center) return alert('Set center first');
       const payload = {
-        room_id: Number(roomId),
+        room_id: roomId,
         center_lat: center.lat,
         center_lng: center.lng,
         radius_m: Number(gfRadius) || 200,
@@ -266,7 +269,7 @@ export default function RoomMap() {
       const fence = await api.setGeofence(token, payload);
       setGeofence(fence);
       renderGeofence(fence);
-      socketRef.current?.emit('update-geofence', { roomId: Number(roomId), geofence: fence });
+      socketRef.current?.emit('update-geofence', { roomId: roomId, geofence: fence });
       alert('Geofence updated');
     } catch (e) {
       alert('Failed to set geofence');
@@ -287,12 +290,39 @@ export default function RoomMap() {
     alert('Click on the map to choose meeting point');
   }
 
+  function startPickGeofenceCenter() {
+    const map = mapRef.current;
+    if (!map) return;
+    const container = map.getContainer();
+    const prevCursor = container.style.cursor;
+    container.style.cursor = 'crosshair';
+    map.once('click', (e) => {
+      container.style.cursor = prevCursor || '';
+      const { lat, lng } = e.latlng;
+      setGfCenter({ lat, lng });
+    });
+    alert('Click on the map to set geofence center');
+  }
+
+  async function deleteMeeting() {
+    try {
+      await api.deleteMeeting(token, roomId);
+      setMeeting(null);
+      renderMeeting(null);
+      socketRef.current?.emit('announce-meeting', { roomId: roomId, meeting: null });
+      const text = `Meeting point deleted by ${user?.username}`;
+      setAlerts((prev) => [{ id: Date.now() + Math.random(), text }, ...prev].slice(0, 20));
+    } catch (e) {
+      alert('Failed to delete meeting');
+    }
+  }
+
   async function submitMeeting() {
     try {
       const { lat, lng, place_name, reach_by } = meetingForm;
       if (!lat || !lng || !place_name || !reach_by) return;
       const meetingRes = await api.setMeeting(token, {
-        room_id: Number(roomId),
+        room_id: roomId,
         place_name,
         lat,
         lng,
@@ -300,7 +330,7 @@ export default function RoomMap() {
       });
       setMeeting(meetingRes);
       renderMeeting(meetingRes);
-      socketRef.current?.emit('announce-meeting', { roomId: Number(roomId), meeting: meetingRes });
+      socketRef.current?.emit('announce-meeting', { roomId: roomId, meeting: meetingRes });
       setMeetingForm({ show: false, lat: null, lng: null, place_name: "", reach_by: "" });
     } catch (e) {
       alert('Failed to set meeting');
@@ -320,7 +350,7 @@ export default function RoomMap() {
         marker.remove();
         markersRef.current.delete("_me");
       }
-      socketRef.current?.emit("stop-sharing", { roomId: Number(roomId) });
+      socketRef.current?.emit("stop-sharing", { roomId: roomId });
       setIsSharing(false);
     } else {
       // Start sharing
@@ -490,9 +520,9 @@ export default function RoomMap() {
       const overpassQuery = `
         [out:json][timeout:25];
         (
-          node["amenity"="hospital"](around:10000,${currentLocation.lat},${currentLocation.lng});
-          way["amenity"="hospital"](around:10000,${currentLocation.lat},${currentLocation.lng});
-          relation["amenity"="hospital"](around:10000,${currentLocation.lat},${currentLocation.lng});
+          node["amenity"="hospital"](around:5000,${currentLocation.lat},${currentLocation.lng});
+          way["amenity"="hospital"](around:5000,${currentLocation.lat},${currentLocation.lng});
+          relation["amenity"="hospital"](around:5000,${currentLocation.lat},${currentLocation.lng});
         );
         out center;
       `;
@@ -657,7 +687,8 @@ export default function RoomMap() {
           className="fixed top-4 right-4 z-[1002] bg-white shadow-lg rounded-lg p-3 border border-slate-200"
         >
           <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.343l1.414-1.414L16 7.515V4h-4v2.343zM7.515 8L4 4.485V8h3.515zM8 16.485L4.485 20H8v-3.515zM16.485 16L20 19.515V16h-3.515z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </button>
       )}
@@ -669,7 +700,7 @@ export default function RoomMap() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-[1001] border-r border-slate-200"
+            className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-[1001] border-r border-slate-200 flex flex-col"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-sky-600 to-indigo-600 p-6 text-white">
@@ -688,7 +719,7 @@ export default function RoomMap() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-6 h-full overflow-y-auto pb-20">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               {/* Live Stats */}
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4">
                 <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -731,13 +762,31 @@ export default function RoomMap() {
 
               {/* Alerts */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-                <h3 className="font-semibold text-slate-900 mb-3">Alerts</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">Alerts</h3>
+                  {alerts.length > 0 && (
+                    <button
+                      onClick={() => setAlerts([])}
+                      className="text-xs text-slate-500 hover:text-red-600 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
                 {alerts.length === 0 ? (
                   <div className="text-sm text-slate-500">No alerts</div>
                 ) : (
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {alerts.map((a) => (
-                      <div key={a.id} className="text-sm text-red-600">⚠️ {a.text}</div>
+                      <div key={a.id} className="flex items-center justify-between bg-red-50 p-2 rounded text-sm">
+                        <span className="text-red-600 flex-1">⚠️ {a.text}</span>
+                        <button
+                          onClick={() => setAlerts(prev => prev.filter(alert => alert.id !== a.id))}
+                          className="text-red-400 hover:text-red-600 ml-2"
+                        >
+                          ×
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -797,12 +846,12 @@ export default function RoomMap() {
                   </button>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('Room link copied!');
+                      navigator.clipboard.writeText(roomId);
+                      alert('Room ID copied!');
                     }}
                     className="w-full py-2 px-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm font-medium"
                   >
-                    🔗 Copy Room Link
+                    🔗 Copy Room ID
                   </button>
                 </div>
               </div>
@@ -819,7 +868,7 @@ export default function RoomMap() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-[1001] border-l border-slate-200"
+            className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-[1001] border-l border-slate-200 flex flex-col"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-red-600 to-pink-600 p-6 text-white">
@@ -838,35 +887,41 @@ export default function RoomMap() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-6 h-full overflow-y-auto pb-20">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               {isAdmin && (
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
                   <h3 className="font-semibold text-slate-900 mb-3">Geofence</h3>
                   <div className="space-y-3">
-                    <div className="text-sm text-slate-600">Center defaults to map center if not set.</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="number" step="any" placeholder="Center lat" value={gfCenter?.lat ?? ''} onChange={(e) => setGfCenter({ lat: parseFloat(e.target.value), lng: gfCenter?.lng ?? 0 })} className="border rounded px-2 py-2 text-sm" />
-                      <input type="number" step="any" placeholder="Center lng" value={gfCenter?.lng ?? ''} onChange={(e) => setGfCenter({ lat: gfCenter?.lat ?? 0, lng: parseFloat(e.target.value) })} className="border rounded px-2 py-2 text-sm" />
-                    </div>
+                    <button onClick={startPickGeofenceCenter} className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                      📍 Pick Center on Map
+                    </button>
+                    {gfCenter && (
+                      <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded">
+                        Center: {gfCenter.lat.toFixed(4)}, {gfCenter.lng.toFixed(4)}
+                      </div>
+                    )}
                     <div>
-                      <input type="number" placeholder="Radius (m)" value={gfRadius} onChange={(e) => setGfRadius(e.target.value)} className="border rounded px-2 py-2 text-sm w-full" />
+                      <label className="block text-sm text-slate-600 mb-1">Radius (km)</label>
+                      <input type="number" step="0.1" placeholder="Radius in km" value={gfRadius / 1000} onChange={(e) => setGfRadius(parseFloat(e.target.value) * 1000 || 300)} className="border rounded px-2 py-2 text-sm w-full" />
                     </div>
                     <button onClick={saveGeofence} className="w-full py-2 px-4 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-sm font-medium">Save Geofence</button>
                   </div>
                 </div>
               )}
 
-              {isAdmin && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-                  <h3 className="font-semibold text-slate-900 mb-3">Meeting Point</h3>
-                  <div className="space-y-3">
-                    <button onClick={startPickMeeting} className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">Pick Meeting Point</button>
-                    {meeting && (
-                      <div className="text-sm text-slate-700">Active: {meeting.place_name}</div>
-                    )}
-                  </div>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <h3 className="font-semibold text-slate-900 mb-3">Meeting Point</h3>
+                <div className="space-y-3">
+                  <button onClick={startPickMeeting} className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">📍 Pick Meeting Point</button>
+                  {meeting && (
+                    <div className="bg-emerald-50 p-3 rounded">
+                      <div className="text-sm font-medium text-emerald-900">{meeting.place_name}</div>
+                      <div className="text-xs text-emerald-700">Reach by: {new Date(meeting.reach_by).toLocaleString()}</div>
+                      <button onClick={deleteMeeting} className="mt-2 text-xs text-red-600 hover:text-red-800">🗑️ Delete Meeting</button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
               {/* Emergency Tools */}
               <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4">
                 <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">

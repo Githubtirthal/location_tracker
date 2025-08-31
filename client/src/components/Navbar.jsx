@@ -18,10 +18,10 @@ export default function Navbar() {
   }, []);
 
   const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "Features", href: "#features" },
-    { name: "Solutions", href: "#solutions" },
+    { name: "Home", href: "/" },
     { name: "Dashboard", href: "/dashboard" },
+    { name: "About Us", href: "/about" },
+    { name: "Contact Us", href: "/contact" },
   ];
 
   const handleLogout = () => {
@@ -30,15 +30,17 @@ export default function Navbar() {
   };
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-all ${
-      isScrolled ? "backdrop-blur bg-white/70 shadow-sm" : "bg-transparent"
+    <header className={`sticky top-0 z-50 transition-all ${
+      isScrolled ? "backdrop-blur bg-white/70 shadow-sm" : "bg-white shadow-sm"
     }`}>
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Global">
         <div className="flex items-center justify-between py-4">
-          <a href="#home" className="flex items-center gap-2 group">
-            <span className="inline-block h-8 w-8 rounded bg-gradient-to-br from-sky-500 to-indigo-600 transition-transform group-hover:scale-110" />
-            <span className="text-lg font-semibold tracking-tight text-slate-900">Realtime Tracker</span>
-          </a>
+          <Link to="/" className="flex items-center gap-2 group">
+            <svg className="h-8 w-8 text-sky-600 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span className="text-lg font-semibold tracking-tight text-slate-900">MapMates</span>
+          </Link>
 
           <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
@@ -56,12 +58,6 @@ export default function Navbar() {
             {isAuthed ? (
               <>
                 <span className="text-sm text-slate-600">Welcome, {user?.username}</span>
-                <Link
-                  to="/dashboard"
-                  className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 hover:shadow-lg transition-all duration-200 hover:scale-105"
-                >
-                  Dashboard
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-sm font-medium text-slate-700 hover:text-red-600 transition-all duration-200 hover:scale-105"
@@ -81,7 +77,7 @@ export default function Navbar() {
                   to="/login"
                   className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 hover:shadow-lg transition-all duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
                 >
-                  Get Started
+                  Sign Up
                 </Link>
               </>
             )}
@@ -122,13 +118,6 @@ export default function Navbar() {
                      <span className="flex-1 text-center text-sm text-slate-600 px-3 py-2">
                        Welcome, {user?.username}
                      </span>
-                     <Link
-                       to="/dashboard"
-                       className="flex-1 rounded-md bg-slate-900 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-slate-800 transition-all duration-200"
-                       onClick={() => setIsOpen(false)}
-                     >
-                       Dashboard
-                     </Link>
                      <button
                        onClick={() => {
                          handleLogout();
@@ -153,7 +142,7 @@ export default function Navbar() {
                        className="flex-1 rounded-md bg-slate-900 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-slate-800 transition-all duration-200"
                        onClick={() => setIsOpen(false)}
                      >
-                       Get Started
+                       Sign Up
                      </Link>
                    </>
                  )}

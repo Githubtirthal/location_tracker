@@ -116,6 +116,15 @@ CORS_ALLOWED_ORIGINS = [
         "https://location-tracker-135y.vercel.app,https://location-tracker-135y-git-main-tirthal-patels-projects.vercel.app,https://location-tracker-135y-m3epzraf5-tirthal-patels-projects.vercel.app",
     ).split(",") if o
 ]
+
+# In development, allow Vite dev server on localhost
+if DEBUG and not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS += [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
+    ]
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
@@ -144,6 +153,14 @@ CSRF_TRUSTED_ORIGINS = [
         "https://location-tracker-135y.vercel.app,https://location-tracker-135y-git-main-tirthal-patels-projects.vercel.app,https://location-tracker-135y-m3epzraf5-tirthal-patels-projects.vercel.app",
     ).split(",") if o
 ]
+
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
+    ]
 
 # -------------------------
 # INTERNATIONALIZATION

@@ -14,6 +14,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
 }
+
 .smooth-scroll {
   scroll-behavior: smooth;
 }
@@ -21,7 +22,49 @@ html, body, #root {
 html {
   scroll-behavior: smooth;
 }
+
 .leaflet-container {
   width: 100vw;
   height: 100vh;
+}
+
+/* Ensure sticky navbar stays on top */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Ensure footer sticks to bottom */
+footer {
+  margin-top: auto;
+}
+
+/* Animation delays for connection points */
+.animation-delay-500 {
+  animation-delay: 0.5s;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-1500 {
+  animation-delay: 1.5s;
+}
+
+/* Advanced hover effects */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Cursor spotlight animation */
+@keyframes spotlight {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
 }

@@ -13,6 +13,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/signup", views.signup, name="signup"),
     path("api/login", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/google-auth", views.google_auth, name="google_auth"),
     path("api/token/refresh", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/rooms", views.create_room, name="create_room"),
     path("api/rooms/join", views.join_room, name="join_room"),
@@ -26,4 +27,6 @@ urlpatterns = [
     path("api/meeting/get", views.get_meeting_point, name="get_meeting_point"),
     # movements
     path("api/movement/record", views.record_movement, name="record_movement"),
+    # analytics
+    path("api/traffic/predict", views.predict_traffic, name="predict_traffic"),
 ]

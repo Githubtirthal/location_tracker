@@ -1,13 +1,132 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import Navbar from "./Navbar";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+
+
+function Globe3D() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const containerRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setMousePosition({ x, y });
+    }
+  };
+
+  return (
+    <div className="w-full h-full flex items-center justify-center p-8">
+      <div className="relative w-full max-w-lg">
+        {/* Network Connection World Map */}
+        <div 
+          ref={containerRef}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-8 shadow-2xl cursor-crosshair transition-all duration-500 hover:shadow-3xl hover:scale-105"
+          onMouseMove={handleMouseMove}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            transform: isHovered ? `perspective(1000px) rotateX(${(mousePosition.y - 50) * 0.1}deg) rotateY(${(mousePosition.x - 50) * 0.1}deg)` : 'none'
+          }}
+        >
+          <img 
+            src="https://cdn.vectorstock.com/i/500p/97/87/global-network-connection-world-map-point-vector-51609787.jpg"
+            alt="Global Network Connection World Map"
+            className="w-full h-auto object-contain transition-all duration-300"
+            style={{
+              filter: isHovered ? 'brightness(1.4) contrast(1.2) saturate(1.4) hue-rotate(10deg)' : 'brightness(1.2) contrast(1.1) saturate(1.2)',
+              transform: isHovered ? `scale(1.05) translate(${(mousePosition.x - 50) * 0.02}px, ${(mousePosition.y - 50) * 0.02}px)` : 'scale(1)'
+            }}
+          />
+          
+          {/* Dynamic cursor spotlight */}
+          {isHovered && (
+            <div 
+              className="absolute pointer-events-none transition-all duration-200"
+              style={{
+                left: `${mousePosition.x}%`,
+                top: `${mousePosition.y}%`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              <div className="w-20 h-20 bg-gradient-radial from-cyan-400/30 via-blue-400/20 to-transparent rounded-full animate-pulse"></div>
+              <div className="absolute inset-0 w-12 h-12 bg-gradient-radial from-white/20 to-transparent rounded-full animate-ping"></div>
+            </div>
+          )}
+          
+          {/* Animated overlay effects */}
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 via-transparent to-indigo-900/20 pointer-events-none"></div>
+          
+          {/* Interactive connection points */}
+          <div 
+            className="absolute top-1/3 left-1/4 w-3 h-3 bg-blue-400 rounded-full shadow-lg shadow-blue-400/50 transition-all duration-300"
+            style={{
+              animation: isHovered ? 'pulse 0.5s infinite' : 'pulse 2s infinite',
+              transform: isHovered ? 'scale(1.5)' : 'scale(1)'
+            }}
+          ></div>
+          <div 
+            className="absolute top-1/2 right-1/3 w-2 h-2 bg-green-400 rounded-full shadow-lg shadow-green-400/50 transition-all duration-300 animation-delay-500"
+            style={{
+              animation: isHovered ? 'pulse 0.7s infinite' : 'pulse 2s infinite',
+              transform: isHovered ? 'scale(1.8)' : 'scale(1)'
+            }}
+          ></div>
+          <div 
+            className="absolute bottom-1/3 left-1/2 w-2.5 h-2.5 bg-purple-400 rounded-full shadow-lg shadow-purple-400/50 transition-all duration-300 animation-delay-1000"
+            style={{
+              animation: isHovered ? 'pulse 0.6s infinite' : 'pulse 2s infinite',
+              transform: isHovered ? 'scale(1.6)' : 'scale(1)'
+            }}
+          ></div>
+          <div 
+            className="absolute top-2/3 right-1/4 w-2 h-2 bg-orange-400 rounded-full shadow-lg shadow-orange-400/50 transition-all duration-300 animation-delay-1500"
+            style={{
+              animation: isHovered ? 'pulse 0.8s infinite' : 'pulse 2s infinite',
+              transform: isHovered ? 'scale(1.7)' : 'scale(1)'
+            }}
+          ></div>
+          
+          {/* Dynamic connection lines */}
+          {isHovered && (
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              <defs>
+                <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+              <path 
+                d={`M ${mousePosition.x * 0.01 * containerRef.current?.offsetWidth || 0} ${mousePosition.y * 0.01 * containerRef.current?.offsetHeight || 0} Q 200 100 300 150`}
+                stroke="url(#connectionGradient)"
+                strokeWidth="2"
+                fill="none"
+                className="animate-pulse"
+              />
+            </svg>
+          )}
+        </div>
+        
+        {/* Floating connection indicators */}
+        <div className={`absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-lg transition-all duration-300 ${isHovered ? 'animate-bounce scale-110' : 'animate-pulse'}`}>
+          🌍 Live
+        </div>
+        <div className={`absolute -bottom-2 -left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg transition-all duration-300 ${isHovered ? 'animate-spin scale-110' : 'animate-pulse'}`}>
+          📡 Connected
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Fix Leaflet default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -16,6 +135,8 @@ L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
+
+
 
 // Create colored markers
 const createColoredIcon = (color) => {
@@ -107,79 +228,7 @@ function InteractiveMapDemo() {
 
   return (
     <div className="relative">
-      {/* Scenario Controls */}
-      <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20 w-32">
-        <h3 className="font-semibold text-slate-900 mb-3 text-sm">Live Demo</h3>
-        <div className="space-y-2 mb-4">
-          {Object.entries(scenarios).map(([key, scenario]) => (
-            <button
-              key={key}
-              onClick={() => setActiveScenario(key)}
-              className={`w-full text-center px-2 py-1 rounded text-xs transition-all ${
-                activeScenario === key 
-                  ? 'bg-sky-100 text-sky-700 font-medium' 
-                  : 'hover:bg-slate-50 text-slate-600'
-              }`}
-            >
-              {scenario.name}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => setSimulationRunning(!simulationRunning)}
-          className={`w-full px-2 py-1 rounded text-xs font-medium transition-all ${
-            simulationRunning 
-              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-              : 'bg-green-100 text-green-700 hover:bg-green-200'
-          }`}
-        >
-          {simulationRunning ? '⏸️ Pause' : '▶️ Play'}
-        </button>
-      </div>
 
-      {/* Live Stats */}
-      <div className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20">
-        <h4 className="font-semibold text-slate-900 mb-3">Live Stats</h4>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-600">Distance:</span>
-            <span className="font-medium">{stats.distance.toFixed(1)} km</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600">Tasks:</span>
-            <span className="font-medium">{stats.tasks}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600">Avg Speed:</span>
-            <span className="font-medium">{stats.avgSpeed.toFixed(0)} km/h</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${simulationRunning ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-xs text-slate-500">
-              {simulationRunning ? 'Live Updates' : 'Paused'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Team List */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20">
-        <h4 className="font-semibold text-slate-900 mb-3">Team Members</h4>
-        <div className="space-y-2">
-          {teamMembers.map(member => (
-            <div key={member.id} className="flex items-center gap-3">
-              <div 
-                className="h-3 w-3 rounded-full border border-white shadow-sm"
-                style={{ backgroundColor: member.color }}
-              />
-              <div>
-                <div className="text-sm font-medium text-slate-900">{member.name}</div>
-                <div className="text-xs text-slate-500">{member.role} • {member.speed} km/h</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Map */}
       <MapContainer 
@@ -187,6 +236,7 @@ function InteractiveMapDemo() {
         zoom={16} 
         className="h-full w-full"
         zoomControl={false}
+        scrollWheelZoom={false}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -196,20 +246,7 @@ function InteractiveMapDemo() {
           <Marker 
             key={member.id} 
             position={member.position}
-          >
-            <Popup>
-              <div className="text-center">
-                <div className="font-semibold text-slate-900">{member.name}</div>
-                <div className="text-sm text-slate-600">{member.role}</div>
-                <div className="text-xs text-slate-500 mt-1">
-                  Speed: {member.speed} km/h
-                </div>
-                <div className="text-xs text-slate-500">
-                  Last update: {new Date().toLocaleTimeString()}
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+          />
         ))}
         
         {/* Connection lines between team members */}
@@ -245,10 +282,8 @@ export default function Landing() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-white text-slate-900">
-        <section id="home" className="relative isolate pt-28">
+    <div className="min-h-screen bg-white text-slate-900">
+      <section id="home" className="relative isolate pt-12">
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-50 to-white" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 py-16 md:grid-cols-2">
@@ -260,11 +295,11 @@ export default function Landing() {
                 </div>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
                   <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent">
-                    Track Everything
+                    MapMates
                   </span>
                   <br />
                   <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                    In Real-Time
+                    Track Everything In Real-Time
                   </span>
                 </h1>
                 <p className="mt-6 text-lg text-slate-600 leading-relaxed">
@@ -278,7 +313,7 @@ export default function Landing() {
                     className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                   >
                     <span className="relative z-10">
-                      {isAuthed ? "Go to Dashboard" : "Start Tracking Now"}
+                      {isAuthed ? "Get Started Now" : "Start Tracking"}
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-sky-700 to-indigo-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </button>
@@ -296,8 +331,8 @@ export default function Landing() {
               <div ref={attachRevealRef} className="transform opacity-0 translate-y-6 transition-all duration-700 delay-150">
                 <div className="relative">
                   <div className="absolute -inset-4 -z-10 rounded-2xl bg-gradient-to-tr from-sky-100 to-indigo-100 blur-2xl" />
-                  <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow">
-                    <div className="h-full w-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-sky-200 via-white to-indigo-100" />
+                  <div className="w-full overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
+                    <Globe3D />
                   </div>
                 </div>
               </div>
@@ -460,12 +495,12 @@ export default function Landing() {
                     ))}
                   </div>
                   <div className="mt-8 text-center">
-                    <button className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                    <Link to={solution.title === "Field Teams" ? "/demo/field-teams" : solution.title === "Event Management" ? "/demo/event-management" : "/demo/logistics"} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
                       Learn More
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -476,123 +511,7 @@ export default function Landing() {
 
 
 
-      <footer className="bg-slate-900 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
-            {/* Brand Section */}
-            <div className="lg:col-span-1">
-              <a href="#home" className="flex items-center gap-3 group">
-                <span className="inline-block h-10 w-10 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 transition-transform group-hover:scale-110" />
-                <span className="text-xl font-bold tracking-tight">Realtime Tracker</span>
-              </a>
-              <p className="mt-4 text-slate-300 leading-relaxed">
-                The most powerful real-time location tracking platform for teams and organizations.
-              </p>
-              <div className="mt-6 flex space-x-4">
-                {[
-                  { name: 'Twitter', icon: '🐦', href: '#' },
-                  { name: 'GitHub', icon: '🐙', href: '#' },
-                  { name: 'LinkedIn', icon: '💼', href: '#' },
-                  { name: 'Discord', icon: '💬', href: '#' }
-                ].map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-lg transition-all duration-300 hover:bg-slate-700 hover:scale-110"
-                    aria-label={social.name}
-                  >
-                    {social.icon}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-semibold">Product</h3>
-              <ul className="mt-4 space-y-3">
-                {['Features', 'Solutions', 'Dashboard', 'API Docs'].map((item) => (
-                  <li key={item}>
-                    <a href={`#${item.toLowerCase()}`} className="text-slate-300 transition-colors hover:text-white hover:underline">
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h3 className="text-lg font-semibold">Company</h3>
-              <ul className="mt-4 space-y-3">
-                {['About Us', 'Careers', 'Blog', 'Press Kit'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-slate-300 transition-colors hover:text-white hover:underline">
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <h3 className="text-lg font-semibold">Get in Touch</h3>
-              <div className="mt-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-sky-400">📧</span>
-                  <a href="mailto:hello@realtimetracker.com" className="text-slate-300 transition-colors hover:text-white">
-                    hello@realtimetracker.com
-                  </a>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sky-400">📞</span>
-                  <a href="tel:+1234567890" className="text-slate-300 transition-colors hover:text-white">
-                    +1 (234) 567-890
-                  </a>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sky-400">📍</span>
-                  <span className="text-slate-300">
-                    San Francisco, CA
-                  </span>
-                </div>
-              </div>
-              
-              {/* Newsletter */}
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold text-slate-200">Stay Updated</h4>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 rounded-lg bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                  <button className="rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:scale-105">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="mt-12 border-t border-slate-800 pt-8">
-            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-              <p className="text-sm text-slate-400">
-                © {new Date().getFullYear()} Realtime Tracker Inc. All rights reserved.
-              </p>
-              <div className="flex gap-6 text-sm text-slate-400">
-                <a href="#" className="transition-colors hover:text-white">Privacy Policy</a>
-                <a href="#" className="transition-colors hover:text-white">Terms of Service</a>
-                <a href="#" className="transition-colors hover:text-white">Cookie Policy</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-      </main>
-    </>
+    </div>
   );
 }
 

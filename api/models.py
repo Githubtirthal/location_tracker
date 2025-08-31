@@ -1,11 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
+import secrets
+import string
 
 class Room(models.Model):
-    id = models.AutoField(primary_key=True)  # room id used for joining
+    id = models.CharField(primary_key=True, max_length=8, editable=False)
     name = models.CharField(max_length=150)
     creator = models.ForeignKey(User, related_name="created_rooms", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            characters = string.ascii_uppercase + string.digits
+            while True:
+                room_id = ''.join(secrets.choice(characters) for _ in range(8))
+                if not Room.objects.filter(id=room_id).exists():
+                    self.id = room_id
+                    break
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.id})"

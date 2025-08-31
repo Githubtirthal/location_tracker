@@ -17,11 +17,39 @@ console.log('Environment:', process.env.NODE_ENV);
 console.log('DJANGO_BASE:', DJANGO_BASE);
 console.log('NODE_WS:', NODE_WS);
 
+function getErrorMessage(error, path, status) {
+  // Authentication specific errors
+  if (path.includes('/login')) {
+    if (status === 401 || status === 403) return 'Invalid username or password. Please try again.';
+    if (status === 429) return 'Too many login attempts. Please wait a few minutes and try again.';
+    if (status >= 500) return 'Login service is temporarily unavailable. Please try again later.';
+  }
+  
+  if (path.includes('/signup')) {
+    if (status === 400) {
+      if (error.includes('username') || error.includes('Username')) return 'Username is already taken. Please choose a different one.';
+      if (error.includes('email') || error.includes('Email')) return 'Email is already registered. Please use a different email or try logging in.';
+      if (error.includes('password')) return 'Password does not meet requirements. Please check and try again.';
+      return 'Please check your information and try again.';
+    }
+    if (status === 429) return 'Too many signup attempts. Please wait a few minutes and try again.';
+    if (status >= 500) return 'Registration service is temporarily unavailable. Please try again later.';
+  }
+  
+  // General errors
+  if (status === 401) return 'Your session has expired. Please log in again.';
+  if (status === 403) return 'You do not have permission to perform this action.';
+  if (status === 404) return 'The requested resource was not found.';
+  if (status === 429) return 'Too many requests. Please wait a moment and try again.';
+  if (status >= 500) return 'Server is temporarily unavailable. Please try again later.';
+  
+  return 'Something went wrong. Please try again.';
+}
+
 async function request(path, { method = "GET", body, token } = {}) {
   try {
     const headers = { "Content-Type": "application/json" };
     if (token) {
-      // Sanitize token to prevent HTTP response splitting
       const sanitizedToken = token.replace(/[\r\n]/g, '');
       headers["Authorization"] = `Bearer ${sanitizedToken}`;
     }
@@ -34,16 +62,28 @@ async function request(path, { method = "GET", body, token } = {}) {
     
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(text || `HTTP ${res.status}`);
+      let errorData;
+      try {
+        errorData = JSON.parse(text);
+      } catch {
+        errorData = { error: text || `HTTP ${res.status}` };
+      }
+      
+      const errorMessage = errorData.error || errorData.errors || errorData.detail || text;
+      const userFriendlyMessage = getErrorMessage(errorMessage, path, res.status);
+      throw new Error(userFriendlyMessage);
     }
     
     return await res.json();
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error('Network error: Please check your connection');
+      throw new Error('Unable to connect to server. Please check your internet connection and try again.');
     }
     if (error instanceof SyntaxError) {
-      throw new Error('Invalid response format from server');
+      throw new Error('Server response error. Please try again later.');
+    }
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
     }
     throw error;
   }
@@ -52,6 +92,7 @@ async function request(path, { method = "GET", body, token } = {}) {
 export const api = {
   signup: (payload) => request("/signup", { method: "POST", body: payload }),
   login: (payload) => request("/login", { method: "POST", body: payload }),
+  googleAuth: (accessToken) => request("/google-auth", { method: "POST", body: { access_token: accessToken } }),
   createRoom: (token, name) => request("/rooms", { method: "POST", body: { name }, token }),
   joinRoom: (token, room_id) => request("/rooms/join", { method: "POST", body: { room_id }, token }),
   listRooms: (token) => request("/rooms/list", { method: "POST", token }),
@@ -66,4 +107,10 @@ export const api = {
     request("/meeting/set", { method: "POST", token, body: { room_id, place_name, lat, lng, reach_by } }),
   getMeeting: (token, room_id) =>
     request("/meeting/get", { method: "POST", token, body: { room_id } }),
+  // Traffic prediction
+  predictTraffic: (token, payload) =>
+    request("/traffic/predict", { method: "POST", token, body: payload }),
+  // Meeting delete
+  deleteMeeting: (token, room_id) =>
+    request("/meeting/delete", { method: "POST", token, body: { room_id } }),
 };

@@ -1,0 +1,21 @@
+{
+  "builds": [
+    {
+      "src": "realtime-tracker/client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/realtime-tracker/client/dist/$1"
+    }
+  ],
+  "env": {
+    "VITE_DJANGO_BASE": "https://location-tracker-4zk7.onrender.com/api",
+    "VITE_NODE_WS": "https://node-server-yp9l.onrender.com"
+  }
+}
